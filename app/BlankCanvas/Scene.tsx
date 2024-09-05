@@ -3,55 +3,46 @@
 import * as THREE from "three";
 import { useEffect, useRef } from "react";
 import { useFrame, useThree, extend } from "@react-three/fiber";
-// import GUI from "lil-gui";
-// import { useGUI } from "./hooks/useGUI";
-import { BlankMaterialProps, BlankMaterial } from "./Material";
-import { useBrush } from "@funtech-inc/use-shader-fx";
+
+import { useBrush, useNoise } from "@funtech-inc/use-shader-fx";
 import { Perf } from "r3f-perf";
+import { Float, OrbitControls, PointMaterial } from "@react-three/drei";
 
-extend({ BlankMaterial });
+import { AmbientLight, DirectionalLight } from "three/webgpu";
 
-const CONFIG = {
-   color: new THREE.Color("red"),
-};
-// const setGUI = (gui: GUI) => {
-//    gui.addColor(CONFIG, "color");
-// };
+extend({
+   WebGPUAmbientLight: AmbientLight,
+   WebGPUDirectionalLight: DirectionalLight,
+});
+
+declare global {
+   namespace JSX {
+      interface IntrinsicElements {
+         webGPUAmbientLight: any;
+         webGPUDirectionalLight: any;
+      }
+   }
+}
 
 const Scene = () => {
-   // const updateGUI = useGUI(setGUI);
-   const ref = useRef<BlankMaterialProps>();
-   const { size, viewport } = useThree();
-
-   const [updateBrush, setBrush, { output }] = useBrush({
+   const { gl, scene, camera, size, viewport } = useThree();
+   const [updateNoise, setNoise, { output: noise }] = useNoise({
       size,
-      dpr: viewport.dpr,
+      dpr: 2,
    });
-
-   setBrush({
-      radius: 0.01,
+   useFrame((state) => {
+      // updateNoise(state);
    });
-
-   useFrame((props) => {
-      updateBrush(props, {
-         color: CONFIG.color,
-      });
-      ref.current!.u_time = props.clock.getElapsedTime();
-      // updateGUI();
-   });
-
-   // set resolution
-   useEffect(() => {
-      ref.current!.u_resolution = new THREE.Vector2(size.width, size.height);
-   }, [size]);
-
    return (
       <>
-         <mesh>
-            <planeGeometry args={[2, 2]} />
-            <blankMaterial key={BlankMaterial.key} u_tex={output} ref={ref} />
-         </mesh>
-         {/* <Perf position={"bottom-left"} /> */}
+         <webGPUAmbientLight intensity={2} />
+         <webGPUDirectionalLight intensity={2} />
+         <Float speed={3} rotationIntensity={10} floatIntensity={5}>
+            <mesh>
+               <boxGeometry args={[1.5, 1.5, 1.5]} />
+               <meshStandardMaterial color="hotpink" />
+            </mesh>
+         </Float>
       </>
    );
 };

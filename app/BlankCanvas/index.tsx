@@ -1,57 +1,66 @@
 "use client";
 
-import { Suspense, useRef } from "react";
-import { PerformanceMonitor } from "@react-three/drei";
-import { Perf } from "r3f-perf";
+import { Suspense, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Stats } from "@react-three/drei";
 
-// import { Canvas } from "@react-three/fiber";
-// import Scene from "./Scene";
+import Scene from "./Scene";
 
-import { lazy } from "react";
-import { Canvas } from "@funtech-inc/r3f-offscreen";
+// ↓WebGPU
+import { WebGPURenderer } from "three/webgpu";
 
-// This is the fallback component that will be rendered on the main thread
-// This will happen on systems where OffscreenCanvas is not supported
-const Scene = lazy(() => import("./Scene"));
-
-// This is the worker thread that will render the scene
-const worker = new Worker(new URL("./worker.tsx", import.meta.url), {
-   type: "module",
-});
+/*===============================================
+↓WebWorker
+===============================================*/
+// import { lazy } from "react";
+// import { Canvas } from "@funtech-inc/r3f-offscreen";
+// // This is the fallback component that will be rendered on the main thread
+// // This will happen on systems where OffscreenCanvas is not supported
+// const Scene = lazy(() => import("./Scene"));
+// // This is the worker thread that will render the scene
+// const worker = new Worker(new URL("./worker.tsx", import.meta.url), {
+//    type: "module",
+// });
 
 const BlankCanvas = ({
    eventSource,
 }: {
    eventSource?: HTMLElement | React.MutableRefObject<HTMLElement> | undefined;
 }) => {
-   // starts at the 1.5 and clamps the gradual dpr between 0.5 at the lowest and 2 at the highest
-   // const [dpr, setDpr] = useState(1.5);
+   const [frameloop, setFrameLoop] = useState<
+      "never" | "always" | "demand" | undefined
+   >("never");
+
    return (
-      // <Canvas
-      //    dpr={[1, 2]}
-      //    eventSource={eventSource}
-      //    eventPrefix="client">
-      //    <PerformanceMonitor
-      //    // onChange={({ factor }) => {
-      //    //    console.log(`dpr:${dpr}`);
-      //    //    setDpr(Math.round((0.5 + 1.5 * factor) * 10) / 10);
-      //    // }}
-      //    >
-      //       <Suspense fallback={null}>
-      //          <Scene />
-      //       </Suspense>
-      //    </PerformanceMonitor>
-      //    <Perf position={"bottom-left"} />
-      // </Canvas>
-      <Suspense fallback={null}>
-         <Canvas
-            worker={worker}
-            fallback={<Scene />}
-            dpr={[1, 2]}
-            eventSource={eventSource}
-            eventPrefix="client"
-         />
-      </Suspense>
+      <Canvas
+         eventSource={eventSource}
+         eventPrefix="client"
+         // ↓WebGPU
+         frameloop={frameloop}
+         gl={(canvas) => {
+            const renderer = new WebGPURenderer({
+               canvas: canvas as any,
+            });
+            renderer.init().then(() => setFrameLoop("always"));
+            return renderer;
+         }}>
+         <Suspense fallback={null}>
+            <Scene />
+         </Suspense>
+         <Stats />
+      </Canvas>
+      /*===============================================
+		↓WebWorker
+		===============================================*/
+      // <Suspense fallback={null}>
+      //    <Canvas
+      //       worker={worker}
+      //       fallback={<Scene />}
+      //       dpr={[1, 2]}
+      //       eventSource={eventSource}
+      //       eventPrefix="client"
+      //    />
+      // </Suspense>
    );
 };
 

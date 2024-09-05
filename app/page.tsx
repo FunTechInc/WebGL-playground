@@ -1,4 +1,5 @@
 export default function Home() {
+   // return null;
    return (
       <div
          style={{
@@ -10,15 +11,15 @@ export default function Home() {
          }}>
          <button
             style={{
-               color: "white",
+               color: "black",
                fontSize: "14px",
-               width: "240px",
+               width: "400px",
                height: "80px",
-               backgroundColor: "rgba(0,0,0,1)",
+               backgroundColor: "rgba(255,255,255,1)",
                textAlign: "center",
                cursor: "pointer",
                pointerEvents: "auto",
-               mixBlendMode: "color",
+               mixBlendMode: "difference",
             }}>
             UI (you can pointer over)
          </button>
